@@ -1,0 +1,19 @@
+{
+  "name": "AllTheAldi",
+  "short_name": "AllTheAldi",
+  "description": "Your shopping list sorted into the quickest walk around Aldi stores in Ireland.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f4f0e6",
+  "theme_color": "#245c45",
+  "icons": [
+    {
+      "src": "allthealdiicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
