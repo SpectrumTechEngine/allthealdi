@@ -9,6 +9,8 @@
 <meta name="description" content="Your shopping list sorted into the quickest walk around Aldi stores in Ireland."/>
 <!-- Lets phones install this as a proper app (these files sit next to index.html) -->
 <link rel="manifest" href="manifest.webmanifest"/>
+<!-- Usage numbers and owner tools, shared by every Spectrum Tech Engine app -->
+<script src="https://thespectrumtechengine.com/ste-owner.js" data-app="allthealdi" defer></script>
 <link rel="icon" type="image/png" href="allthealdiicon.png"/>
 <link rel="apple-touch-icon" href="allthealdiicon.png"/>
 <meta name="mobile-web-app-capable" content="yes"/>
@@ -279,6 +281,9 @@ function merge(name, qty, unit, zone, unsure){
   if (ex){ ex.qty += qty; ex.deferred = false; return; }
   state.items.push({id:uid(), name, qty, unit:unit||null, zoneId:zone, unsure:!!unsure && zone!=="unplaced", checked:false, deferred:false, createdAt:Date.now()});
 }
+// Usage numbers for the owner (ste-owner.js on the website); counts only, never what's on the list
+function ste(f, ...a){ try{ if (window.STE && window.STE[f]) window.STE[f](...a); }catch(e){} }
+
 function addRaw(raw){
   const parts = String(raw).split(/[\n;]+/).flatMap(l=>l.split(",")).map(s=>s.trim()).filter(Boolean).slice(0,60);
   let n = 0;
@@ -477,13 +482,14 @@ function bind(){
   const q = document.getElementById("q");
   const form = document.getElementById("add");
   if (form){
-    form.onsubmit = e => { e.preventDefault(); if (!addRaw(q.value)) return; draft = ""; focusBox = true; save(); render(); };
+    form.onsubmit = e => { e.preventDefault(); if (!addRaw(q.value)) return; ste("detail", "items-added"); draft = ""; focusBox = true; save(); render(); };
     q.oninput = () => { draft = q.value; };
   }
   const on = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
   on("got", ()=>{ hint = false; save(); render(); });
-  on("sample", ()=>{ for (const row of SAMPLE){ const c = classify(row.name); merge(row.name, row.qty, row.unit, c.zone, !c.sure); } save(); render(); });
+  on("sample", ()=>{ ste("detail", "sample-list-loaded"); for (const row of SAMPLE){ const c = classify(row.name); merge(row.name, row.qty, row.unit, c.zone, !c.sure); } save(); render(); });
   on("copy", async ()=>{
+    ste("track", "share");
     const text = listText();
     if (navigator.share){ try{ await navigator.share({title:"Aldi list", text}); return; }catch(e){ if (e && e.name==="AbortError") return; } }
     try{ await navigator.clipboard.writeText(text); toast("List copied. Paste it anywhere."); }
@@ -494,7 +500,7 @@ function bind(){
     undoItems = state.items.slice(); state.items = []; save(); render();
     toast("List cleared.", "Undo", ()=>{ state.items = undoItems; undoItems = null; save(); render(); });
   });
-  on("start", ()=>{ view = "shop"; shopIdx = 0; moving = null; render(); window.scrollTo(0,0); });
+  on("start", ()=>{ ste("track", "play"); ste("value", "items-per-shop", state.items.length); view = "shop"; shopIdx = 0; moving = null; render(); window.scrollTo(0,0); });
   on("leave", ()=>{ view = "list"; render(); });
   on("next", ()=>{ const seq = openStops(); if (shopIdx >= seq.length-1){ view = "list"; toast("All done! Off to the tills."); } else shopIdx++; render(); window.scrollTo(0,0); });
   on("prev", ()=>{ shopIdx = Math.max(0, shopIdx-1); render(); window.scrollTo(0,0); });
